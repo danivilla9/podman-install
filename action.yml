@@ -33,6 +33,13 @@ inputs:
     - resolute
     - noble
     default: questing
+  allow-upgrade:
+    description: "Allow upgrade of the Ubuntu system, defaults to false"
+    required: false
+    options:
+      - false
+      - true
+    default: 'false'
   podman-version-input:
     description: "Podman version for Windows. Use 'latest' or a specific version (e.g. '5.6.2')."
     required: false
@@ -86,15 +93,18 @@ runs:
       run: |
         set -eux
         ubuntu_repo="${{ inputs.ubuntu-repository }}"
+        allow_upgrade="${{ inputs.allow-upgrade }}"
         echo "INFO: Using ${ubuntu_repo} Ubuntu repository for podman installation."
+        echo "INFO: The system upgrade is allowed: ${allow_upgrade}"
         # Require the runner is ubuntu-24.04
         IDV=$(. /usr/lib/os-release && echo ${ID}-${VERSION_ID})
         echo "Actual Ubuntu version: ${IDV}"
         echo "deb http://azure.archive.ubuntu.com/ubuntu ${ubuntu_repo} universe main" | sudo tee /etc/apt/sources.list.d/${ubuntu_repo}.list
         /bin/time -f '%E %C' sudo apt-get update -o Dir::Etc::sourcelist="sources.list.d/${ubuntu_repo}.list" \
           -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0"
-        # Disable auto upgrade for this repository
-        sudo tee /etc/apt/preferences.d/${ubuntu_repo} <<EOF
+        # Disable auto upgrade for this repository by default
+        if [ "${allow_upgrade}" == "false" ]; then
+          sudo tee /etc/apt/preferences.d/${ubuntu_repo} <<EOF
         Package: *
         Pin: release n=${ubuntu_repo}
         Pin-Priority: 50
@@ -103,6 +113,7 @@ runs:
         Pin: release n=${ubuntu_repo}
         Pin-Priority: 500
         EOF
+        fi
         /bin/time -f '%E %C' sudo apt install -y --allow-downgrades criu/${ubuntu_repo} crun/${ubuntu_repo} podman/${ubuntu_repo} skopeo/${ubuntu_repo}
         AFTER_IDV=$(. /usr/lib/os-release && echo ${ID}-${VERSION_ID})
         if [[ "$AFTER_IDV" != "$IDV" ]]; then
