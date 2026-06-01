@@ -84,10 +84,12 @@ runs:
           # Fetch latest release with error handling
           if [ -n "$GITHUB_TOKEN" ]; then
             echo "Using GITHUB_TOKEN for authenticated API request."
-            API_RESPONSE=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/containers/podman/releases/latest)
+            API_RESPONSE=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/podman-container-tools
+podman/releases/latest)
           else
             echo "Warning: GITHUB_TOKEN is not set. API requests may be subject to stricter rate limits."
-            API_RESPONSE=$(curl -s https://api.github.com/repos/containers/podman/releases/latest)
+            API_RESPONSE=$(curl -s https://api.github.com/repos/podman-container-tools
+podman/releases/latest)
           fi
           
           # Check for API errors (rate limiting, etc.)
@@ -144,16 +146,16 @@ runs:
         # Construct Windows download URL
         case "$FILE_TYPE" in
           "setup.exe")
-            DOWNLOAD_URL="https://github.com/containers/podman/releases/download/${LATEST_VERSION}/podman-${VERSION_NUMBER}-setup.exe"
+            DOWNLOAD_URL="https://github.com/podman-container-tools/podman/releases/download/${LATEST_VERSION}/podman-${VERSION_NUMBER}-setup.exe"
             ;;
           "installer.exe")
-            DOWNLOAD_URL="https://github.com/containers/podman/releases/download/${LATEST_VERSION}/podman-installer-windows-${ARCHITECTURE}.exe"
+            DOWNLOAD_URL="https://github.com/podman-container-tools/podman/releases/download/${LATEST_VERSION}/podman-installer-windows-${ARCHITECTURE}.exe"
             ;;
           "remote.zip")
-            DOWNLOAD_URL="https://github.com/containers/podman/releases/download/${LATEST_VERSION}/podman-remote-release-windows_${ARCHITECTURE}.zip"
+            DOWNLOAD_URL="https://github.com/podman-container-tools/podman/releases/download/${LATEST_VERSION}/podman-remote-release-windows_${ARCHITECTURE}.zip"
             ;;
           "msi")
-            DOWNLOAD_URL="https://github.com/containers/podman/releases/download/${LATEST_VERSION}/podman-installer-windows-${ARCHITECTURE}.msi"
+            DOWNLOAD_URL="https://github.com/podman-container-tools/podman/releases/download/${LATEST_VERSION}/podman-installer-windows-${ARCHITECTURE}.msi"
             ;;
           *)
             echo "Error: Unsupported Windows file type: $FILE_TYPE"
