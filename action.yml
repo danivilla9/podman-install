@@ -125,7 +125,7 @@ runs:
     - name: Fetch Podman Download URL for Windows
       if: runner.os == 'Windows'
       id: fetch-podman-url
-      uses: redhat-actions/podman-install/.github/actions/fetch-latest-podman-version-windows@edf9cd67e118e45e295f27c6e3ef5f73ad6505d3
+      uses: redhat-actions/podman-install/.github/actions/fetch-latest-podman-version-windows@50a7dd02e78b3747c2a19f110ac266e7306faec5
       with:
         version_input: ${{ inputs.podman-version-input || 'latest' }}
         github_token: ${{ inputs.github-token }}
