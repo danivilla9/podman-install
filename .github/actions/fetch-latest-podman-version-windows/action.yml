@@ -14,12 +14,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: 'Fetch Latest Podman Version for Windows'
-description: 'Fetches Podman release or nightly build artifacts and prepares Windows installer URLs or local paths'
+name: 'Fetch Podman Version for Windows'
+description: 'Resolves Podman release download URLs or downloads nightly Windows MSI artifacts from podman-container-tools/podman CI'
 
 inputs:
   version_input:
-    description: 'Use "latest" for stable release, "nightly" or "main" for main branch CI artifacts, or a specific version/URL'
+    description: 'Use "latest" for the stable release, "nightly" or "main" for main-branch CI artifacts, a semver like "v5.6.1" or "5.6.1", or a full download URL'
     required: true
     default: 'latest'
   architecture:
@@ -27,14 +27,14 @@ inputs:
     required: false
     default: 'amd64'
   file_type:
-    description: 'File type for Windows (setup.exe, installer.exe, remote.zip, msi)'
+    description: 'Release asset type: setup.exe, installer.exe, remote.zip, or msi (ignored for nightly; nightly always fetches MSI artifacts)'
     required: false
     default: 'msi'
   github_token:
-    description: 'GitHub token to make authenticated API requests (required for nightly artifacts)'
+    description: 'GitHub token for authenticated API requests. Required for nightly artifacts; optional but recommended for release lookups to avoid rate limits'
     required: false
   nightly_branch:
-    description: 'Branch label used in nightly artifact names (main or latest release branch)'
+    description: 'Branch label in nightly artifact names (e.g. "main" selects win-msi-amd64-main-<sha>)'
     required: false
     default: 'main'
 
@@ -43,10 +43,10 @@ outputs:
     description: 'The Podman version (e.g., v5.6.1 or main-451b71f for nightly)'
     value: ${{ steps.fetch.outputs.version }}
   download_url:
-    description: 'Public download URL for release artifacts'
+    description: 'Public GitHub Release download URL. Set for latest, specific version, and URL inputs; empty for nightly'
     value: ${{ steps.fetch.outputs.download_url }}
   local_installer_path:
-    description: 'Local path to a downloaded nightly MSI on the runner'
+    description: 'Absolute path to a downloaded nightly MSI on the runner. Set only when version_input is nightly or main'
     value: ${{ steps.fetch.outputs.local_installer_path }}
   is_latest:
     description: 'Whether the latest release version was fetched (true/false)'
