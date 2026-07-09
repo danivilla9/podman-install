@@ -82,6 +82,7 @@ runs:
           echo "GitHub Token: not provided"
         fi
 
+        # Input validation
         if [ -z "$INPUT_VERSION" ]; then
           echo "Error: Version input cannot be empty"
           exit 1
@@ -163,6 +164,7 @@ runs:
         if [ "$INPUT_VERSION" = "latest" ]; then
           echo "Fetching latest Podman release..."
 
+          # Fetch latest release with error handling
           if [ -n "$GITHUB_TOKEN" ]; then
             echo "Using GITHUB_TOKEN for authenticated API request."
             API_RESPONSE=$(curl -sL -H "Authorization: Bearer $GITHUB_TOKEN" "https://api.github.com/repos/${PODMAN_REPO}/releases/latest")
@@ -171,12 +173,14 @@ runs:
             API_RESPONSE=$(curl -sL "https://api.github.com/repos/${PODMAN_REPO}/releases/latest")
           fi
 
+          # Check for API errors (rate limiting, etc.)
           if echo "$API_RESPONSE" | jq -e '.message' >/dev/null 2>&1; then
             ERROR_MESSAGE=$(echo "$API_RESPONSE" | jq -r '.message')
             echo "Error: GitHub API returned an error: $ERROR_MESSAGE"
             exit 1
           fi
 
+          # Parse version with validation
           LATEST_VERSION=$(echo "$API_RESPONSE" | jq -r '.tag_name')
           if [ "$LATEST_VERSION" = "null" ] || [ -z "$LATEST_VERSION" ]; then
             echo "Error: Could not parse version from GitHub API response"
@@ -221,6 +225,7 @@ runs:
           VERSION_NUMBER=${LATEST_VERSION#v}
         fi
 
+        # Construct Windows download URL
         case "$FILE_TYPE" in
           setup.exe)
             DOWNLOAD_URL="https://github.com/${PODMAN_REPO}/releases/download/${LATEST_VERSION}/podman-${VERSION_NUMBER}-setup.exe"
@@ -242,6 +247,8 @@ runs:
         esac
 
         echo "Download URL: $DOWNLOAD_URL"
+
+        # Validate that the download URL actually exists
         echo "Validating download URL..."
         HTTP_CODE=$(curl -sL -o /dev/null -w "%{http_code}" -I "$DOWNLOAD_URL")
         if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "302" ]; then
