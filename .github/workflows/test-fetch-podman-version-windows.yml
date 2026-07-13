@@ -1,0 +1,102 @@
+# /**********************************************************************
+#  * Copyright (C) 2025 Red Hat, Inc.
+#  *
+#  * Licensed under the Apache License, Version 2.0 (the "License");
+#  * you may not use this file except in compliance with the License.
+#  * You may obtain a copy of the License at
+#  *
+#  * http://www.apache.org/licenses/LICENSE-2.0
+#  *
+#  * Unless required by applicable law or agreed to in writing, software
+#  * distributed under the License is distributed on an "AS IS" BASIS,
+#  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  * See the License for the specific language governing permissions and
+#  * limitations under the License.
+#  *
+#  * SPDX-License-Identifier: Apache-2.0
+#  ***********************************************************************/
+
+name: Test Fetch Podman Version for Windows
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/actions/fetch-latest-podman-version-windows/**'
+      - '.github/workflows/test-fetch-podman-version-windows.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/actions/fetch-latest-podman-version-windows/**'
+      - '.github/workflows/test-fetch-podman-version-windows.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  test-fetch-latest-release:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364af1cce6 # v4.2.2
+
+      - name: Fetch latest stable release
+        id: fetch
+        uses: ./.github/actions/fetch-latest-podman-version-windows
+        with:
+          version_input: latest
+          file_type: msi
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify latest release outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "version=${{ steps.fetch.outputs.version }}"
+          echo "download_url=${{ steps.fetch.outputs.download_url }}"
+          echo "is_latest=${{ steps.fetch.outputs.is_latest }}"
+          echo "is_nightly=${{ steps.fetch.outputs.is_nightly }}"
+
+          test "${{ steps.fetch.outputs.is_latest }}" = "true"
+          test "${{ steps.fetch.outputs.is_nightly }}" = "false"
+          test -n "${{ steps.fetch.outputs.version }}"
+          test -n "${{ steps.fetch.outputs.download_url }}"
+
+          HTTP_CODE=$(curl -sL -o /dev/null -w "%{http_code}" -I "${{ steps.fetch.outputs.download_url }}")
+          test "$HTTP_CODE" = "200" -o "$HTTP_CODE" = "302"
+
+  test-fetch-nightly:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364af1cce6 # v4.2.2
+
+      - name: Fetch nightly CI build
+        id: fetch
+        uses: ./.github/actions/fetch-latest-podman-version-windows
+        with:
+          version_input: nightly
+          architecture: amd64
+          github_token: ${{ secrets.PODMAN_REPO_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Verify nightly outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "version=${{ steps.fetch.outputs.version }}"
+          echo "local_installer_path=${{ steps.fetch.outputs.local_installer_path }}"
+          echo "is_latest=${{ steps.fetch.outputs.is_latest }}"
+          echo "is_nightly=${{ steps.fetch.outputs.is_nightly }}"
+
+          test "${{ steps.fetch.outputs.is_nightly }}" = "true"
+          test "${{ steps.fetch.outputs.is_latest }}" = "false"
+          test -z "${{ steps.fetch.outputs.download_url }}"
+          test -n "${{ steps.fetch.outputs.version }}"
+          test -f "${{ steps.fetch.outputs.local_installer_path }}"
+          ls -la "${{ steps.fetch.outputs.local_installer_path }}"
