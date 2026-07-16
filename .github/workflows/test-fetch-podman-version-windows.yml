@@ -90,13 +90,15 @@ jobs:
           set -euo pipefail
 
           echo "version=${{ steps.fetch.outputs.version }}"
-          echo "local_installer_path=${{ steps.fetch.outputs.local_installer_path }}"
+          echo "download_url=${{ steps.fetch.outputs.download_url }}"
           echo "is_latest=${{ steps.fetch.outputs.is_latest }}"
           echo "is_nightly=${{ steps.fetch.outputs.is_nightly }}"
 
           test "${{ steps.fetch.outputs.is_nightly }}" = "true"
           test "${{ steps.fetch.outputs.is_latest }}" = "false"
-          test -z "${{ steps.fetch.outputs.download_url }}"
           test -n "${{ steps.fetch.outputs.version }}"
-          test -f "${{ steps.fetch.outputs.local_installer_path }}"
-          ls -la "${{ steps.fetch.outputs.local_installer_path }}"
+          test -n "${{ steps.fetch.outputs.download_url }}"
+
+          # Nightly download_url is the Actions archive_download_url (zip), not a public MSI
+          [[ "${{ steps.fetch.outputs.download_url }}" =~ /actions/artifacts/[0-9]+/zip$ ]]
+          [[ "${{ steps.fetch.outputs.version }}" =~ ^main- ]]
